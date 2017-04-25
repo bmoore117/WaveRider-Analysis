@@ -40,8 +40,9 @@ analysis <- function(x) {
       
       delta = price - prevPrice
       pctDelta = signif(delta/prevPrice, 2)
+      trendDuration = point - prevPoint
       
-      trends <- rbind(trends, data.frame('startIdx' = prevPoint, 'endIdx' = point, 'trendPct' = pctDelta))
+      trends <- rbind(trends, data.frame('startIdx' = prevPoint, 'endIdx' = point, 'trendPct' = pctDelta, 'trendDuration' = trendDuration))
     }
     prevPoint = point
   }
@@ -65,20 +66,29 @@ WriteLabels <- function(x) {
   stddev = sd(x$trendPct)
   avg = mean(x$trendPct)
   
-  out = data.frame()
+  out = data.frame('idx' = integer(0), 'trend1' = integer(0), 'trend2' = integer(0), 'trend3' = integer(0), 'trend4plus' = integer(0), 'pct25' = integer(0), 'pct50' = )
   
   for(trend in x) {
-    trendDir = sign(trend)
-    isUnder1 = abs(trend) <= stddev
-    isUnder2 = abs(trend) <= 2*stddev
-    isUnder3 = abs(trend) <= 3*stddev
-    isUnder4plus = abs(trend) <= 4*stddev
+    #1 is up, 0 is down
+    trendDir = 0
+    temp = sign(trend)
+    if(temp == -1) {
+      temp = 0
+    }
+    
+    isUnder1 = as.integer(abs(trend) <= stddev)
+    isUnder2 = as.integer(tabs(trend) <= 2*stddev)
+    isUnder3 = as.integer(abs(trend) <= 3*stddev)
+    isUnder4plus = as.integer(abs(trend) <= 4*stddev)
+    
+    
+    
   }
 }
 
 init <- function() {
   library(readr)
-  F5 <- read_csv("C:/Users/Benjamin/OneDrive/Code/Trading/DataSets/F5.csv", 
+  F5 <- read_csv("C:/Users/Ben/OneDrive/Code/Trading/DataSets/F5.csv", 
                  col_types = cols(Date = col_date(format = "%Y-%m-%d")))
   
   F5 <- F5[order(as.Date(F5$Date)), ]
