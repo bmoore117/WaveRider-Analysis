@@ -27,11 +27,10 @@ analysis <- function(x) {
   temp = c(min, max)
   
   inflectionPts = temp[order(temp)]
-  trends = vector(mode = 'numeric', length = length(inflectionPts) - 1)
-  trendPct = vector(mode = 'numeric', length = length(inflectionPts) - 1)
+  
+  trends = data.frame(startIdx = integer(0), endIdx = integer(0), trendPct = double(0))
   
   prevPoint = -1
-  i = 0
   
   for(point in inflectionPts) {
     if(prevPoint != -1) {
@@ -39,24 +38,49 @@ analysis <- function(x) {
       price = x[point]
       prevPrice = x[prevPoint]
       
-      trends[i] = price - prevPrice
-      trendPct[i] = signif(trends[i]/prevPrice, 2)
-      i = i + 1
+      delta = price - prevPrice
+      pctDelta = signif(delta/prevPrice, 2)
+      
+      trends <- rbind(trends, data.frame('startIdx' = prevPoint, 'endIdx' = point, 'trendPct' = pctDelta))
     }
     prevPoint = point
   }
   
-  return(trendPct)
+  #need: df with trend start idx, end idx, and strength. Then later on in labeling can say 
+  #how far along in the trend point is, and how strong a trend that happens to be
+  
+  #end result of analysis and labeling will be a csv with all points labeled as above
+  #so that when we feed into the trader, we'll have a set of predictions about this point, e.g.:
+  
+  #25% chance it is in a uptrend of 5% or greater, and is in the first 25% of that trend
+  
+  #sample file format:
+  
+  #idx, trend1Dev, trend2Dev, trend3Dev, trend4+, percentile25, percentile50, percentile75+
+  
+  return(trends)
 }
 
-smoothener <- function(x) {
-  avg = mean(abs(x))
+WriteLabels <- function(x) {
+  stddev = sd(x$trendPct)
+  avg = mean(x$trendPct)
   
-  for(point in x) {
-    if(abs(point) < avg) {
-      x = 0
-    }
+  out = data.frame()
+  
+  for(trend in x) {
+    trendDir = sign(trend)
+    isUnder1 = abs(trend) <= stddev
+    isUnder2 = abs(trend) <= 2*stddev
+    isUnder3 = abs(trend) <= 3*stddev
+    isUnder4plus = abs(trend) <= 4*stddev
   }
+}
+
+init <- function() {
+  library(readr)
+  F5 <- read_csv("C:/Users/Benjamin/OneDrive/Code/Trading/DataSets/F5.csv", 
+                 col_types = cols(Date = col_date(format = "%Y-%m-%d")))
   
-  return(x)
+  F5 <- F5[order(as.Date(F5$Date)), ]
+  return(F5)
 }
