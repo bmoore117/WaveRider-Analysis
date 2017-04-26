@@ -52,25 +52,36 @@ analysis <- function(x) {
 
 writeLabels <- function(prices, trendData) {
   
-  out = data.frame('idx' = integer(0), 'trend1' = integer(0), 'trend2' = integer(0), 'trend3' = integer(0), 'trend4plus' = integer(0), 'pct25' = integer(0), 'pct50' = )
+  out = data.frame()
   
   #task: given a point & its features, tell how far up and for how long we'll go
   
   #arch: label all points with how far up this trend will continue as a % value change. 
   #Also say for how many days the trend will continue
   
-  for(i in 1:length(x)) {
-    prevPoint = 0
-    for(j in 1:nrow(trendData)) {
-      point = trendData$startIdx[j]
-      if(i) {}
+  j = 1
+  for(i in 1:length(prices)) {
+    
+    trendStart = trendData$startIdx[j]
+    trendEnd = trendData$endIdx[j]
+    
+    while((i < trendStart || i >= trendEnd) && j < nrow(trendData)) {
+      j = j + 1
+      trendStart = trendData$startIdx[j]
+      trendEnd = trendData$endIdx[j]
     }
     
-    isUnder1 = as.integer(abs(trend) <= stddev)
-    isUnder2 = as.integer(abs(trend) <= 2*stddev)
-    isUnder3 = as.integer(abs(trend) <= 3*stddev)
-    isUnder4plus = as.integer(abs(trend) <= 4*stddev)
+    if(j < nrow(trendData)) {
+      price = prices[i]
+      
+      valueChangeFromHere = (prices[trendData$endIdx[j]] - price) / prices[trendData$endIdx[j]] 
+      trendDurationFromHere = trendEnd - i
+      
+      out <- rbind(out, data.frame('pricePctChgByTrendEnd' = valueChangeFromHere, 'trendRemainingDuration' = trendDurationFromHere))
+    }
   }
+  
+  write_csv(out, "labeling.csv")
 }
 
 Mode <- function(x) {
